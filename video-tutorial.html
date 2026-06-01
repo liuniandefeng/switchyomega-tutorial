@@ -508,6 +508,79 @@
             font-size: 11px;
         }
 
+        /* Voice Controls */
+        .voice-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .voice-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 16px;
+        }
+
+        .voice-btn:hover {
+            background: var(--bg-card-active);
+            border-color: var(--primary);
+        }
+
+        .voice-btn.active {
+            background: var(--gradient-1);
+            border: none;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .voice-status {
+            font-size: 12px;
+            color: var(--text-muted);
+            max-width: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .voice-status.speaking {
+            color: var(--primary-light);
+        }
+
+        /* Subtitle */
+        .subtitle-bar {
+            position: absolute;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 12px 28px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 700px;
+            width: 90%;
+            text-align: center;
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.6;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .subtitle-bar.visible {
+            opacity: 1;
+        }
+
         /* Animations */
         @keyframes float {
             0%, 100% { transform: translateY(0); }
@@ -562,12 +635,17 @@
                 <div class="top-bar-title">代理IP插件安装教程</div>
             </div>
             <div class="top-bar-right">
+                <div class="voice-controls">
+                    <div class="voice-status" id="voiceStatus">配音关</div>
+                    <button class="voice-btn" id="voiceBtn" title="开启/关闭配音">🔇</button>
+                </div>
                 <div class="step-indicator">步骤 <span id="currentStep">1</span> / <span id="totalSteps">12</span></div>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
+            <div class="subtitle-bar" id="subtitleBar"></div>
             <div class="slides-wrapper" id="slidesWrapper">
 
                 <!-- Slide 0: Title -->
@@ -806,14 +884,51 @@
     </div>
 
     <script>
+        // ==========================================
+        // 配音文案数据
+        // ==========================================
+        const voiceScripts = [
+            // Slide 0: 标题页
+            "欢迎观看代理IP插件安装教程。本教程将手把手教你如何安装和配置浏览器代理插件，轻松实现安全高效的网络访问。整个操作过程非常简单，预计只需要5分钟。让我们开始吧！",
+            // Slide 1: 下载
+            "首先，我们需要下载代理安装文件。点击页面上的「下载代理文件」按钮，将压缩包保存到本地电脑。这个文件适用于Google Chrome浏览器。",
+            // Slide 2: 安装步骤1
+            "第一步，下载完成后，将压缩包解压到本地文件夹。请记住解压后的文件夹位置，后面安装时会用到。",
+            // Slide 3: 安装步骤2
+            "第二步，打开Chrome浏览器，点击右上角的扩展程序按钮，也就是拼图图标，然后选择「管理扩展程序」。",
+            // Slide 4: 安装步骤3
+            "第三步，在扩展程序管理页面中，找到并点击左上角的「加载已解压的扩展程序」按钮。",
+            // Slide 5: 安装步骤4
+            "第四步，在弹出的文件选择窗口中，找到之前解压的SwitchyOmega_Chromium文件夹，选中它并点击确定。",
+            // Slide 6: 安装步骤5
+            "第五步，如果看到「扩展程序加载完毕」的提示，就说明插件已经安装成功了！",
+            // Slide 7: 安装步骤6
+            "第六步，在扩展程序列表中，你可以看到Proxy SwitchyOmega已经出现在列表中，表示安装完成。",
+            // Slide 8: 使用步骤1
+            "接下来是使用教程。第一步，点击Chrome扩展程序按钮，找到SwitchyOmega，点击图钉图标将它固定到工具栏，方便后续使用。",
+            // Slide 9: 使用步骤2
+            "第二步，点击工具栏上的SwitchyOmega图标，在下拉菜单中选择「选项」，进入插件的设置页面。",
+            // Slide 10: 使用步骤3
+            "第三步，这是最关键的一步。在设置页面中点击左侧的「Proxy」选项卡，选择协议类型，然后填入提供的IP地址和HTTP端口。填好后，点击左下角的「应用选项」按钮保存设置。",
+            // Slide 11: 使用步骤4
+            "第四步，保存配置后，再次点击SwitchyOmega插件图标，在下拉菜单中选择「Proxy」，这样代理就启用了。",
+            // Slide 12: 使用步骤5
+            "最后一步，启动代理后，访问话务系统时会出现代理登录弹窗，这就代表代理已经成功启动了。填入提供的代理账号和密码，登录后就可以正常访问话务系统了。恭喜你，全部配置完成！"
+        ];
+
+        // ==========================================
         // State
+        // ==========================================
         let currentSlide = 0;
         let isPlaying = false;
         let playInterval = null;
-        const SLIDE_DURATION = 5000; // 5 seconds per slide
+        let voiceEnabled = false;
+        const SLIDE_DURATION = 6000;
         const totalSlides = document.querySelectorAll('.slide').length;
 
+        // ==========================================
         // Elements
+        // ==========================================
         const slidesWrapper = document.getElementById('slidesWrapper');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
@@ -826,12 +941,96 @@
         const currentStepEl = document.getElementById('currentStep');
         const totalStepsEl = document.getElementById('totalSteps');
         const timeDisplay = document.getElementById('timeDisplay');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const voiceStatus = document.getElementById('voiceStatus');
+        const subtitleBar = document.getElementById('subtitleBar');
 
+        // ==========================================
         // Init
+        // ==========================================
         totalStepsEl.textContent = totalSlides;
         createDots();
         goToSlide(0);
 
+        // ==========================================
+        // Voice / Speech Synthesis
+        // ==========================================
+        function speak(text) {
+            if (!voiceEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.95;
+            utterance.pitch = 1.05;
+            utterance.volume = 1;
+
+            // Try to find a Chinese voice
+            const voices = window.speechSynthesis.getVoices();
+            const zhVoice = voices.find(v => v.lang.includes('zh'));
+            if (zhVoice) utterance.voice = zhVoice;
+
+            utterance.onstart = () => {
+                voiceStatus.textContent = '播放中';
+                voiceStatus.classList.add('speaking');
+            };
+            utterance.onend = () => {
+                voiceStatus.textContent = '配音开';
+                voiceStatus.classList.remove('speaking');
+            };
+            utterance.onerror = () => {
+                voiceStatus.textContent = '配音开';
+                voiceStatus.classList.remove('speaking');
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function stopSpeaking() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            voiceStatus.textContent = voiceEnabled ? '配音开' : '配音关';
+            voiceStatus.classList.remove('speaking');
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            voiceBtn.textContent = voiceEnabled ? '🔊' : '🔇';
+            voiceBtn.classList.toggle('active', voiceEnabled);
+            voiceStatus.textContent = voiceEnabled ? '配音开' : '配音关';
+
+            if (voiceEnabled) {
+                // Speak current slide
+                speak(voiceScripts[currentSlide]);
+                showSubtitle(voiceScripts[currentSlide]);
+            } else {
+                stopSpeaking();
+                hideSubtitle();
+            }
+        }
+
+        function showSubtitle(text) {
+            subtitleBar.textContent = text;
+            subtitleBar.classList.add('visible');
+        }
+
+        function hideSubtitle() {
+            subtitleBar.classList.remove('visible');
+        }
+
+        voiceBtn.addEventListener('click', toggleVoice);
+
+        // Preload voices
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        // ==========================================
+        // Slides
+        // ==========================================
         function createDots() {
             for (let i = 0; i < totalSlides; i++) {
                 const dot = document.createElement('div');
@@ -845,32 +1044,32 @@
             if (index < 0 || index >= totalSlides) return;
             currentSlide = index;
 
-            // Move slides
             slidesWrapper.style.transform = `translateY(-${currentSlide * 100}vh)`;
 
-            // Update active slide
             document.querySelectorAll('.slide').forEach((s, i) => {
                 s.classList.toggle('active', i === currentSlide);
             });
 
-            // Update dots
             document.querySelectorAll('.progress-dot').forEach((d, i) => {
                 d.classList.remove('active', 'passed');
                 if (i === currentSlide) d.classList.add('active');
                 else if (i < currentSlide) d.classList.add('passed');
             });
 
-            // Update progress bar
             const progress = ((currentSlide + 1) / totalSlides) * 100;
             progressBar.style.width = progress + '%';
 
-            // Update step indicator
             currentStepEl.textContent = currentSlide + 1;
 
-            // Update time
             const currentTime = currentSlide * (SLIDE_DURATION / 1000);
             const totalTime = (totalSlides - 1) * (SLIDE_DURATION / 1000);
             timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(totalTime)}`;
+
+            // Voice
+            if (voiceEnabled) {
+                speak(voiceScripts[currentSlide]);
+                showSubtitle(voiceScripts[currentSlide]);
+            }
         }
 
         function formatTime(seconds) {
@@ -884,6 +1083,8 @@
                 goToSlide(currentSlide + 1);
             } else {
                 stopAutoPlay();
+                stopSpeaking();
+                hideSubtitle();
             }
         }
 
@@ -913,9 +1114,17 @@
             clearInterval(playInterval);
         }
 
+        // ==========================================
         // Event Listeners
-        prevBtn.addEventListener('click', prevSlide);
-        nextBtn.addEventListener('click', nextSlide);
+        // ==========================================
+        prevBtn.addEventListener('click', () => {
+            prevSlide();
+            if (isPlaying) { stopAutoPlay(); startAutoPlay(); }
+        });
+        nextBtn.addEventListener('click', () => {
+            nextSlide();
+            if (isPlaying) { stopAutoPlay(); startAutoPlay(); }
+        });
         playBtn.addEventListener('click', toggleAutoPlay);
 
         progressWrap.addEventListener('click', (e) => {
@@ -926,7 +1135,6 @@
             goToSlide(Math.min(slideIndex, totalSlides - 1));
         });
 
-        // Keyboard Controls
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                 e.preventDefault();
