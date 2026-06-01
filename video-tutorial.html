@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代理IP插件安装教程 - 视频演示</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --bg-dark: #0a0e1a;
+            --bg-card: #141927;
+            --bg-card-active: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #1e293b;
+            --border-active: #6366f1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --gradient-1: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+            --gradient-2: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            --gradient-3: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Video Player Container */
+        .video-player {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-dark);
+            position: relative;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            height: 56px;
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .top-bar-logo {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .top-bar-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .step-indicator {
+            font-size: 13px;
+            color: var(--text-muted);
+            background: rgba(99, 102, 241, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .step-indicator span {
+            color: var(--primary-light);
+            font-weight: 700;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Slides Container */
+        .slides-wrapper {
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .slide {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 60px 120px;
+            position: relative;
+        }
+
+        /* Slide Background Effects */
+        .slide::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.08;
+            pointer-events: none;
+        }
+
+        .slide[data-theme="purple"]::before {
+            background: var(--primary);
+            top: -100px;
+            right: -100px;
+        }
+
+        .slide[data-theme="cyan"]::before {
+            background: var(--secondary);
+            bottom: -100px;
+            left: -100px;
+        }
+
+        .slide[data-theme="green"]::before {
+            background: var(--success);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Slide Content */
+        .slide-inner {
+            max-width: 1100px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+        }
+
+        .slide.active .slide-inner {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .slide-image-wrap {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Slide Number Badge */
+        .slide-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--primary-light);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .slide-badge.green {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.25);
+            color: var(--success);
+        }
+
+        .slide-badge.orange {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.25);
+            color: var(--warning);
+        }
+
+        .slide-title {
+            font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 16px;
+        }
+
+        .slide-title .gradient-text {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        .slide-desc .highlight {
+            background: linear-gradient(120deg, rgba(99, 102, 241, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--primary-light);
+        }
+
+        .slide-desc .highlight-orange {
+            background: linear-gradient(120deg, rgba(245, 158, 11, 0.2) 0%, rgba(239, 68, 68, 0.2) 100%);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--warning);
+        }
+
+        /* Slide Image */
+        .slide-image {
+            width: 100%;
+            max-width: 520px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.1);
+            transition: all 0.5s ease;
+        }
+
+        .slide.active .slide-image {
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(99, 102, 241, 0.15);
+        }
+
+        /* Title Slide Special */
+        .title-slide .slide-inner {
+            flex-direction: column;
+            text-align: center;
+            gap: 0;
+        }
+
+        .title-slide .slide-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            margin-bottom: 16px;
+        }
+
+        .title-slide .slide-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .title-meta {
+            display: flex;
+            gap: 32px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .title-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .title-meta-item svg {
+            width: 18px;
+            height: 18px;
+            color: var(--primary-light);
+        }
+
+        /* Download Slide Special */
+        .download-card-inline {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .download-card-inline:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .dl-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc04 75%, #ea4335 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .dl-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .dl-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .dl-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: auto;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .dl-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Bottom Controls */
+        .bottom-controls {
+            height: 80px;
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 0 24px;
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .ctrl-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ctrl-btn:hover {
+            background: var(--bg-card-active);
+            border-color: var(--primary);
+        }
+
+        .ctrl-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .ctrl-btn.play-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            border: none;
+        }
+
+        .ctrl-btn.play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .ctrl-btn.play-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            flex: 1;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .progress-bar-wrap {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--gradient-1);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-dots {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .progress-dot.passed {
+            background: var(--primary-light);
+        }
+
+        /* Time Display */
+        .time-display {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Keyboard hint */
+        .keyboard-hint {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            font-size: 12px;
+            color: var(--text-muted);
+            opacity: 0.5;
+            z-index: 50;
+        }
+
+        .keyboard-hint kbd {
+            display: inline-block;
+            padding: 2px 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 11px;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { opacity: 0.08; }
+            50% { opacity: 0.15; }
+        }
+
+        .slide::before {
+            animation: glow-pulse 4s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .slide {
+                padding: 80px 24px 120px;
+            }
+            .slide-inner {
+                flex-direction: column;
+                gap: 30px;
+            }
+            .slide-image {
+                max-width: 100%;
+            }
+            .download-card-inline {
+                flex-direction: column;
+                text-align: center;
+            }
+            .dl-btn {
+                margin-left: 0;
+            }
+            .keyboard-hint { display: none; }
+        }
+
+        @media (max-width: 600px) {
+            .top-bar { padding: 0 16px; }
+            .bottom-controls { gap: 12px; padding: 0 16px; }
+            .progress-container { max-width: 200px; }
+            .slide-badge { font-size: 11px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-player">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <div class="top-bar-logo">🔌</div>
+                <div class="top-bar-title">代理IP插件安装教程</div>
+            </div>
+            <div class="top-bar-right">
+                <div class="step-indicator">步骤 <span id="currentStep">1</span> / <span id="totalSteps">12</span></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="slides-wrapper" id="slidesWrapper">
+
+                <!-- Slide 0: Title -->
+                <div class="slide title-slide active" data-theme="purple">
+                    <div class="slide-inner">
+                        <div class="slide-badge">视频教程</div>
+                        <div class="slide-title"><span class="gradient-text">代理IP插件</span><br>安装教程</div>
+                        <p class="slide-subtitle">轻松配置浏览器代理，实现安全高效的网络访问</p>
+                        <div class="title-meta">
+                            <div class="title-meta-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span>发布于 2026-05-29</span>
+                            </div>
+                            <div class="title-meta-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span>预计 5 分钟</span>
+                            </div>
+                            <div class="title-meta-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span>难度：简单</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 1: Download -->
+                <div class="slide" data-theme="purple">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge orange">下载准备</div>
+                            <div class="slide-title">下载代理安装文件</div>
+                            <p class="slide-desc">点击下载代理文件，下载代理的安装文件，适用于 Google Chrome 浏览器</p>
+                            <div class="download-card-inline">
+                                <div class="dl-icon">🌐</div>
+                                <div class="dl-info">
+                                    <h3>安装Chrome 浏览器代理</h3>
+                                    <p>.zip 压缩包格式</p>
+                                </div>
+                                <a href="https://agservice-public-open.oss-cn-hangzhou.aliyuncs.com/SwitchyOmega_Chrom2026/SwitchyOmega_Chromium.zip" class="dl-btn" target="_blank">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    下载代理文件
+                                </a>
+                            </div>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/Gwue1wVNoi" alt="下载并解压插件" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Step 1 -->
+                <div class="slide" data-theme="purple">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge">安装步骤 1/6</div>
+                            <div class="slide-title">下载并<span class="gradient-text">解压插件</span></div>
+                            <p class="slide-desc">下载上方的 Chrome 插件压缩包，解压到本地文件夹</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/Gwue1wVNoi" alt="下载并解压插件" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Step 2 -->
+                <div class="slide" data-theme="purple">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge">安装步骤 2/6</div>
+                            <div class="slide-title">打开<span class="gradient-text">扩展程序管理</span></div>
+                            <p class="slide-desc">点击 Chrome 扩展程序按钮，选择【管理扩展程序】</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/Dd2I1wVNoi" alt="打开扩展程序管理" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Step 3 -->
+                <div class="slide" data-theme="purple">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge">安装步骤 3/6</div>
+                            <div class="slide-title">加载<span class="gradient-text">已解压的扩展程序</span></div>
+                            <p class="slide-desc">在扩展程序页面，点击【加载已解压的扩展程序】按钮</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/oJUd1wVNoi" alt="加载已解压的扩展程序" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Step 4 -->
+                <div class="slide" data-theme="purple">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge">安装步骤 4/6</div>
+                            <div class="slide-title">选择<span class="gradient-text">解压文件夹</span></div>
+                            <p class="slide-desc">在弹出的文件选择器中，选择之前解压的【SwitchyOmega_Chromium】文件夹</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/uSUR1wVNoi" alt="选择解压文件夹" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Step 5 -->
+                <div class="slide" data-theme="purple">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge">安装步骤 5/6</div>
+                            <div class="slide-title">确认<span class="gradient-text">安装成功</span></div>
+                            <p class="slide-desc">看到【扩展程序加载完毕】提示，即表示安装成功</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/fXUF1wVNoi" alt="确认安装成功" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Step 6 -->
+                <div class="slide" data-theme="purple">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge">安装步骤 6/6</div>
+                            <div class="slide-title">查看<span class="gradient-text">已安装插件</span></div>
+                            <p class="slide-desc">在扩展程序列表中可以看到 Proxy SwitchyOmega 已成功安装</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/RNKn1wVNoi" alt="查看已安装插件" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Usage Step 1 -->
+                <div class="slide" data-theme="cyan">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge green">使用步骤 1/5</div>
+                            <div class="slide-title">固定<span class="gradient-text">扩展程序</span></div>
+                            <p class="slide-desc">点击 Chrome 扩展程序按钮，将 SwitchyOmega 固定到工具栏</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/ZTAk1wVNoi" alt="固定扩展程序" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Usage Step 2 -->
+                <div class="slide" data-theme="cyan">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge green">使用步骤 2/5</div>
+                            <div class="slide-title">打开<span class="gradient-text">选项设置</span></div>
+                            <p class="slide-desc">点击 SwitchyOmega 图标，选择【选项】进入设置页面</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/UT8h1wVNoi" alt="打开选项设置" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Usage Step 3 -->
+                <div class="slide" data-theme="cyan">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge green">使用步骤 3/5</div>
+                            <div class="slide-title">配置<span class="gradient-text">代理服务器</span></div>
+                            <p class="slide-desc">点击【Proxy】，选择协议类型，<span class="highlight">填入IP地址和HTTP端口</span>，点击<span class="highlight-orange">【应用选项】</span>保存</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/Ajl21wVNoi" alt="配置代理服务器" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 11: Usage Step 4 -->
+                <div class="slide" data-theme="cyan">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge green">使用步骤 4/5</div>
+                            <div class="slide-title">启用<span class="gradient-text">代理</span></div>
+                            <p class="slide-desc">保存配置后，点击 SwitchyOmega 插件图标，选择【Proxy】即可启用代理</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://aka.doubaocdn.com/s/sEZV1wVNoi" alt="启用代理" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 12: Usage Step 5 -->
+                <div class="slide" data-theme="green">
+                    <div class="slide-inner">
+                        <div class="slide-text">
+                            <div class="slide-badge green">使用步骤 5/5</div>
+                            <div class="slide-title">登录<span class="gradient-text">话务系统</span></div>
+                            <p class="slide-desc">启动代理后，访问话务系统时会出现以下代理登录弹窗，即代表启动成功，填入提供的代理账号、密码登录后即可正常访问</p>
+                        </div>
+                        <div class="slide-image-wrap">
+                            <img src="https://raw.githubusercontent.com/liuniandefeng/switchyomega-tutorial/main/uploads/5246ad1d-c26c-4e2d-b13f-05d4c889ac4e_a76e6f63-181e-4024-9c51-77e51636bb9d.png" alt="话务系统登录弹窗" class="slide-image">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="bottom-controls">
+            <button class="ctrl-btn" id="prevBtn" title="上一步">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+
+            <div class="progress-container">
+                <div class="progress-bar-wrap" id="progressWrap">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-dots" id="progressDots"></div>
+            </div>
+
+            <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+
+            <button class="ctrl-btn play-btn" id="playBtn" title="自动播放">
+                <svg id="playIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <svg id="pauseIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </button>
+
+            <button class="ctrl-btn" id="nextBtn" title="下一步">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+
+        <div class="keyboard-hint">
+            <kbd>←</kbd> <kbd>→</kbd> 切换步骤 &nbsp; <kbd>Space</kbd> 播放/暂停
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentSlide = 0;
+        let isPlaying = false;
+        let playInterval = null;
+        const SLIDE_DURATION = 5000; // 5 seconds per slide
+        const totalSlides = document.querySelectorAll('.slide').length;
+
+        // Elements
+        const slidesWrapper = document.getElementById('slidesWrapper');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const playBtn = document.getElementById('playBtn');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const progressBar = document.getElementById('progressBar');
+        const progressWrap = document.getElementById('progressWrap');
+        const progressDots = document.getElementById('progressDots');
+        const currentStepEl = document.getElementById('currentStep');
+        const totalStepsEl = document.getElementById('totalSteps');
+        const timeDisplay = document.getElementById('timeDisplay');
+
+        // Init
+        totalStepsEl.textContent = totalSlides;
+        createDots();
+        goToSlide(0);
+
+        function createDots() {
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                dot.addEventListener('click', () => goToSlide(i));
+                progressDots.appendChild(dot);
+            }
+        }
+
+        function goToSlide(index) {
+            if (index < 0 || index >= totalSlides) return;
+            currentSlide = index;
+
+            // Move slides
+            slidesWrapper.style.transform = `translateY(-${currentSlide * 100}vh)`;
+
+            // Update active slide
+            document.querySelectorAll('.slide').forEach((s, i) => {
+                s.classList.toggle('active', i === currentSlide);
+            });
+
+            // Update dots
+            document.querySelectorAll('.progress-dot').forEach((d, i) => {
+                d.classList.remove('active', 'passed');
+                if (i === currentSlide) d.classList.add('active');
+                else if (i < currentSlide) d.classList.add('passed');
+            });
+
+            // Update progress bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = progress + '%';
+
+            // Update step indicator
+            currentStepEl.textContent = currentSlide + 1;
+
+            // Update time
+            const currentTime = currentSlide * (SLIDE_DURATION / 1000);
+            const totalTime = (totalSlides - 1) * (SLIDE_DURATION / 1000);
+            timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(totalTime)}`;
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                goToSlide(currentSlide + 1);
+            } else {
+                stopAutoPlay();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) goToSlide(currentSlide - 1);
+        }
+
+        function toggleAutoPlay() {
+            if (isPlaying) {
+                stopAutoPlay();
+            } else {
+                startAutoPlay();
+            }
+        }
+
+        function startAutoPlay() {
+            isPlaying = true;
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = 'block';
+            playInterval = setInterval(nextSlide, SLIDE_DURATION);
+        }
+
+        function stopAutoPlay() {
+            isPlaying = false;
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+            clearInterval(playInterval);
+        }
+
+        // Event Listeners
+        prevBtn.addEventListener('click', prevSlide);
+        nextBtn.addEventListener('click', nextSlide);
+        playBtn.addEventListener('click', toggleAutoPlay);
+
+        progressWrap.addEventListener('click', (e) => {
+            const rect = progressWrap.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percent = x / rect.width;
+            const slideIndex = Math.floor(percent * totalSlides);
+            goToSlide(Math.min(slideIndex, totalSlides - 1));
+        });
+
+        // Keyboard Controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                toggleAutoPlay();
+            }
+        });
+
+        // Touch/Swipe Support
+        let touchStartY = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            const touchEndY = e.changedTouches[0].clientY;
+            const diff = touchStartY - touchEndY;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) nextSlide();
+                else prevSlide();
+            }
+        }, { passive: true });
+    </script>
+</body>
+</html>
