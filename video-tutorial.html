@@ -960,14 +960,24 @@
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'zh-CN';
-            utterance.rate = 0.95;
-            utterance.pitch = 1.05;
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
             utterance.volume = 1;
 
-            // Try to find a Chinese voice
+            // Try to find a Chinese Mandarin voice
             const voices = window.speechSynthesis.getVoices();
-            const zhVoice = voices.find(v => v.lang.includes('zh'));
-            if (zhVoice) utterance.voice = zhVoice;
+            // Priority: zh-CN > zh-Hans > zh > any Chinese
+            const zhVoice = voices.find(v => v.lang === 'zh-CN') ||
+                           voices.find(v => v.lang.includes('zh-Hans')) ||
+                           voices.find(v => v.lang.includes('zh')) ||
+                           voices.find(v => v.name.includes('中文')) ||
+                           voices.find(v => v.name.includes('Chinese'));
+            if (zhVoice) {
+                utterance.voice = zhVoice;
+                console.log('Using voice:', zhVoice.name, zhVoice.lang);
+            } else {
+                console.warn('No Chinese voice found, using default');
+            }
 
             utterance.onstart = () => {
                 voiceStatus.textContent = '播放中';
