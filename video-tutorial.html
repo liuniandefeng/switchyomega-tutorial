@@ -955,9 +955,20 @@
         // ==========================================
         // Voice / Speech Synthesis
         // ==========================================
+        // ==========================================
+        // Auto Play with Voice Control
+        // ==========================================
+        let voiceFinished = false;
+        let autoPlayTimeout = null;
+
         function speak(text) {
-            if (!voiceEnabled || !('speechSynthesis' in window)) return;
+            if (!voiceEnabled || !('speechSynthesis' in window)) {
+                voiceFinished = true;
+                return;
+            }
             window.speechSynthesis.cancel();
+            voiceFinished = false;
+            
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'zh-CN';
             utterance.rate = 0.9;
@@ -966,7 +977,6 @@
 
             // Try to find a Chinese Mandarin voice
             const voices = window.speechSynthesis.getVoices();
-            // Priority: zh-CN > zh-Hans > zh > any Chinese
             const zhVoice = voices.find(v => v.lang === 'zh-CN') ||
                            voices.find(v => v.lang.includes('zh-Hans')) ||
                            voices.find(v => v.lang.includes('zh')) ||
@@ -986,13 +996,31 @@
             utterance.onend = () => {
                 voiceStatus.textContent = '配音开';
                 voiceStatus.classList.remove('speaking');
+                voiceFinished = true;
+                // If auto play is on, go to next slide after voice finishes
+                if (isPlaying) {
+                    scheduleNextSlide();
+                }
             };
             utterance.onerror = () => {
                 voiceStatus.textContent = '配音开';
                 voiceStatus.classList.remove('speaking');
+                voiceFinished = true;
+                if (isPlaying) {
+                    scheduleNextSlide();
+                }
             };
 
             window.speechSynthesis.speak(utterance);
+        }
+
+        function scheduleNextSlide() {
+            // Small delay after voice finishes before switching
+            autoPlayTimeout = setTimeout(() => {
+                if (isPlaying) {
+                    nextSlide();
+                }
+            }, 1000);
         }
 
         function stopSpeaking() {
@@ -1075,7 +1103,9 @@
             const totalTime = (totalSlides - 1) * (SLIDE_DURATION / 1000);
             timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(totalTime)}`;
 
-            // Voice
+            // Voice - reset voiceFinished and speak new slide
+            voiceFinished = false;
+            clearTimeout(autoPlayTimeout);
             if (voiceEnabled) {
                 speak(voiceScripts[currentSlide]);
                 showSubtitle(voiceScripts[currentSlide]);
@@ -1114,7 +1144,21 @@
             isPlaying = true;
             playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
-            playInterval = setInterval(nextSlide, SLIDE_DURATION);
+            
+            // If voice is enabled and not finished, wait for it
+            if (voiceEnabled && !voiceFinished) {
+                // Voice onend will trigger next slide
+                return;
+            }
+            
+            // Otherwise use timer or wait for voice
+            if (voiceEnabled) {
+                // Voice will trigger next slide when finished
+                scheduleNextSlide();
+            } else {
+                // No voice, use fixed interval
+                playInterval = setInterval(nextSlide, SLIDE_DURATION);
+            }
         }
 
         function stopAutoPlay() {
@@ -1122,6 +1166,7 @@
             playIcon.style.display = 'block';
             pauseIcon.style.display = 'none';
             clearInterval(playInterval);
+            clearTimeout(autoPlayTimeout);
         }
 
         // ==========================================
