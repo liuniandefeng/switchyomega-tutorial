@@ -988,10 +988,11 @@
             utterance.pitch = 0.95;
             utterance.volume = 1;
 
-            // Try to find the best Chinese Mandarin voice (prefer female voices for smoother sound)
+            // Try to find the best Chinese Mandarin voice (prefer Microsoft Xiaoxiao)
             const voices = window.speechSynthesis.getVoices();
-            // Priority: zh-CN female > zh-CN > zh-Hans > zh > Chinese
-            const zhVoice = voices.find(v => v.lang === 'zh-CN' && (v.name.includes('Female') || v.name.includes('女') || v.name.includes('Xiaoxiao') || v.name.includes('Yaoyao') || v.name.includes('Huihui'))) ||
+            // Priority: Microsoft Xiaoxiao > zh-CN female > zh-CN > zh-Hans > zh > Chinese
+            const zhVoice = voices.find(v => v.name.includes('Xiaoxiao') || v.name.includes('晓晓') || v.name.includes('Microsoft')) ||
+                           voices.find(v => v.lang === 'zh-CN' && (v.name.includes('Female') || v.name.includes('女') || v.name.includes('Yaoyao') || v.name.includes('Huihui'))) ||
                            voices.find(v => v.lang === 'zh-CN') ||
                            voices.find(v => v.lang.includes('zh-Hans')) ||
                            voices.find(v => v.lang.includes('zh')) ||
