@@ -1150,6 +1150,8 @@
         }
 
         function prevSlide() {
+            stopSpeaking();
+            hideSubtitle();
             if (currentSlide > 0) goToSlide(currentSlide - 1);
         }
 
@@ -1165,21 +1167,16 @@
             isPlaying = true;
             playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
+            clearInterval(playInterval);
+            clearTimeout(autoPlayTimeout);
             
-            // If voice is enabled and not finished, wait for it
-            if (voiceEnabled && !voiceFinished) {
-                // Voice onend will trigger next slide
-                return;
-            }
-            
-            // Otherwise use timer or wait for voice
-            if (voiceEnabled) {
-                // Voice will trigger next slide when finished
-                scheduleNextSlide();
-            } else {
-                // No voice, use fixed interval
+            // Always wait for voice to finish before switching
+            // If voice is enabled, voice onend will trigger next slide
+            // If voice is disabled, use fixed interval
+            if (!voiceEnabled) {
                 playInterval = setInterval(nextSlide, SLIDE_DURATION);
             }
+            // When voiceEnabled: goToSlide() calls speak(), and speak().onend calls scheduleNextSlide()
         }
 
         function stopAutoPlay() {
@@ -1198,6 +1195,9 @@
             if (isPlaying) { stopAutoPlay(); startAutoPlay(); }
         });
         nextBtn.addEventListener('click', () => {
+            // Stop current voice, go to next slide (which will speak new slide's subtitle)
+            stopSpeaking();
+            hideSubtitle();
             nextSlide();
             if (isPlaying) { stopAutoPlay(); startAutoPlay(); }
         });
@@ -1214,6 +1214,8 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                 e.preventDefault();
+                stopSpeaking();
+                hideSubtitle();
                 nextSlide();
             } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
                 e.preventDefault();
@@ -1234,7 +1236,11 @@
             const touchEndY = e.changedTouches[0].clientY;
             const diff = touchStartY - touchEndY;
             if (Math.abs(diff) > 50) {
-                if (diff > 0) nextSlide();
+                if (diff > 0) {
+                    stopSpeaking();
+                    hideSubtitle();
+                    nextSlide();
+                }
                 else prevSlide();
             }
         }, { passive: true });
