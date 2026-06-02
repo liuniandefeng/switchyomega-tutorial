@@ -648,8 +648,8 @@
             </div>
             <div class="top-bar-right">
                 <div class="voice-controls">
-                    <div class="voice-status" id="voiceStatus">配音关</div>
-                    <button class="voice-btn" id="voiceBtn" title="开启/关闭配音">🔇</button>
+                    <div class="voice-status" id="voiceStatus">配音开</div>
+                    <button class="voice-btn active" id="voiceBtn" title="开启/关闭配音">🔊</button>
                 </div>
                 <div class="step-indicator">步骤 <span id="currentStep">1</span> / <span id="totalSteps">12</span></div>
             </div>
@@ -973,6 +973,11 @@
         // ==========================================
         // Voice / Speech Synthesis
         // ==========================================
+        
+        // Auto-enable voice on page load
+        setTimeout(() => {
+            toggleVoice();
+        }, 500);
 
         function speak(text) {
             if (!voiceEnabled || !('speechSynthesis' in window)) {
