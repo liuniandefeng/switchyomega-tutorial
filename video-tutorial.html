@@ -947,6 +947,12 @@
         const subtitleBar = document.getElementById('subtitleBar');
 
         // ==========================================
+        // Auto Play with Voice Control
+        // ==========================================
+        let voiceFinished = false;
+        let autoPlayTimeout = null;
+
+        // ==========================================
         // Init
         // ==========================================
         totalStepsEl.textContent = totalSlides;
@@ -956,11 +962,6 @@
         // ==========================================
         // Voice / Speech Synthesis
         // ==========================================
-        // ==========================================
-        // Auto Play with Voice Control
-        // ==========================================
-        let voiceFinished = false;
-        let autoPlayTimeout = null;
 
         function speak(text) {
             if (!voiceEnabled || !('speechSynthesis' in window)) {
